@@ -197,22 +197,19 @@ function checkGameOver() {
 }
 
 function resetGame() {
-  const connectedPlayers = {};
-  io.sockets.sockets.forEach(socket => {
-    connectedPlayers[socket.id] = {
-        name: `Explorer-${Math.floor(Math.random() * 1000)}`,
-        color: getRandomColor(),
-        isReady: false
-    };
-  });
-
-  gameState = createInitialGameState();
-  gameState.players = connectedPlayers;
-
-  for (const id in connectedPlayers) {
-    gameState.scores[id] = 0;
+  for (const planetName in gameState.planets) {
+      const planet = gameState.planets[planetName];
+      planet.claimedBy = null;
+      planet.isLocked = false;
   }
 
+  for (const playerId in gameState.players) {
+      if (gameState.players.hasOwnProperty(playerId)) {
+          gameState.players[playerId].isReady = false;
+          gameState.scores[playerId] = 0;
+      }
+  }
+  gameState.status = 'waiting';
   io.emit("game-reset", gameState);
 }
 
