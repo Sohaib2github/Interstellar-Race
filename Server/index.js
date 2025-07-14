@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-app.use(express.static("Public"));
+app.use(express.static("public"));
 
 // Helper function to create initial game state
 function createInitialGameState() {
@@ -197,19 +197,22 @@ function checkGameOver() {
 }
 
 function resetGame() {
-  for (const planetName in gameState.planets) {
-      const planet = gameState.planets[planetName];
-      planet.claimedBy = null;
-      planet.isLocked = false;
+  const connectedPlayers = {};
+  io.sockets.sockets.forEach(socket => {
+    connectedPlayers[socket.id] = {
+        name: `Explorer-${Math.floor(Math.random() * 1000)}`,
+        color: getRandomColor(),
+        isReady: false
+    };
+  });
+
+  gameState = createInitialGameState();
+  gameState.players = connectedPlayers;
+
+  for (const id in connectedPlayers) {
+    gameState.scores[id] = 0;
   }
 
-  for (const playerId in gameState.players) {
-      if (gameState.players.hasOwnProperty(playerId)) {
-          gameState.players[playerId].isReady = false;
-          gameState.scores[playerId] = 0;
-      }
-  }
-  gameState.status = 'waiting';
   io.emit("game-reset", gameState);
 }
 
